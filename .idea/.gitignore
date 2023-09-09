@@ -1,0 +1,15 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+test.py
+test0.py
+test1.py
+test2.py
+test3.py
+test4.py
+test_client.py
+test_server.py
+check
+check.json
+check_json.py
+

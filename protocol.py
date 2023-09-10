@@ -13,7 +13,8 @@ PROTOCOL_CLIENT_COMMANDS = {
     'join_mp_game': ['game_id', 'player_name'],
     'leave_mp_game': ['game_id', 'player_name'],
     'start_mp_game': ['game_id'],
-    'next_mp_question': ["game_id"]
+    'next_mp_question': ["game_id"],
+    'games_history': ['player_id']
 }
 PROTOCOL_SERVER_COMMANDS = {
     "login_response": ["is_ok", "player_id"],
@@ -34,7 +35,8 @@ PROTOCOL_SERVER_COMMANDS = {
     'start_mp_game_response': ['is_ok'],
     'next_mp_question_response': ["question_id", "question", "list of answers"],
     'notify_mp_join': ['game_id', 'player_name'],
-    'notify_mp_leave': ['game_id', 'player_name']
+    'notify_mp_leave': ['game_id', 'player_name'],
+    'games_history_response': ['list of games']
 }
 DELIMITER = "|"
 

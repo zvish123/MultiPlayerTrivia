@@ -7,3 +7,5 @@ DIFFICULT_DICT = {
     "1": "Medium",
     "2": "Hard"
 }
+
+NUMBER_OF_QUESTIONS = 4

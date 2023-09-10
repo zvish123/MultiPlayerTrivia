@@ -8,6 +8,7 @@ menu_options = {"Login": "1",
                 "Sign in": "2",
                 "Start new game": "3",
                 "Continue game": "4",
+                "Games history": "5",
                 "Logout": "8",
                 "Exit": "9"}
 
@@ -103,13 +104,11 @@ class Client:
     def start_new_game(self):
         if self.player is not None:
             print("Start new Trivia Game")
-            # category = input(f"Choose trivia game category\n{list(trivia_categories_dict.keys())}: ")
-            # difficulty = input(f"Choose trivia game difficulty\n{list(trivia_difficulty_dict.keys())}: ")
             category = Client.get_field_value_with_checks("Choose trivia game category",
                                                           list(trivia_categories_dict.keys()))
             difficulty = Client.get_field_value_with_checks("Choose trivia game difficulty",
                                                             list(trivia_difficulty_dict.keys()))
-            number_of_questions = 3
+            number_of_questions = constants.NUMBER_OF_QUESTIONS
             cmd, data = self.communication.send_response("start",
                                                          [self.player.name, category, difficulty,
                                                           number_of_questions])
@@ -217,6 +216,31 @@ class Client:
         else:
             print("you need to login before continue game")
 
+    def games_history(self):
+        if self.player is not None:
+            cmd, data = self.communication.send_response("games_history", [self.player.name])
+            games_history = eval(data[0])
+            # games_history_list = []
+            if len(games_history) > 0:
+                print(f"{'Update date'.ljust(20)} {'Game id'.ljust(8)} {'Category'.ljust(20)} {'Difficulty'.ljust(10)} "
+                      f"{'number of questions'.ljust(20)} {'Score'.ljust(7)}")
+                for item in games_history:
+                    prms = item.split("@")
+                    udate = prms[0]
+                    g_id = prms[1]
+                    cat = prms[2]
+                    diclt = prms[3]
+                    noq = prms[4]
+                    score = prms[5]
+                    diff_val = constants.DIFFICULT_DICT[diclt]
+                    print(f"{udate.ljust(20)} {g_id.ljust(8)} {cat.ljust(20)} {diff_val.ljust(10)}"
+                          f" {str(noq.ljust(20))} {score.ljust(7)}")
+                any = input("press any key to continue")
+            else:
+                print(f"no history for {self.player.name}")
+        else:
+            print("login to watch games history")
+
     def run(self):
         ans = ''
         while True:
@@ -240,6 +264,8 @@ class Client:
                 self.start_new_game()
             elif ans == menu_options["Continue game"]:
                 self.continue_game()
+            elif ans == menu_options["Games history"]:
+                self.games_history()
             elif ans == menu_options["Exit"]:
                 print("exiting game")
                 break

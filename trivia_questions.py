@@ -1,6 +1,8 @@
 import requests
 import html
 import random
+
+import constants
 from firefox_db import Database
 
 
@@ -40,7 +42,7 @@ class TriviaOpenDb:
         for q in self.questions.values():
             if q['question'] == question:
                 correct = q['correct_answer']
-                return correct, q['answers'][correct-1]
+                return correct, q['answers'][correct-1], constants.NUMBER_OF_QUESTIONS
         return -1, 0, ""
 
     def add_player_answer(self, game_id, player_name, question_id, player_value):
@@ -86,7 +88,7 @@ class TriviaOpenDb:
                 print(f"   {j}. {answer}")
                 j = j + 1
             reply = int(input("Enter you answer: "))
-            correct_ans,  correct_answer_txt = t.get_correct_answer(question)
+            correct_ans,  correct_answer_txt, max_number_of_questions = t.get_correct_answer(question)
             if reply == correct_ans:
                 score += 5
                 print("correct")
@@ -129,8 +131,8 @@ class TriviaOpenDbFirebase(TriviaOpenDb):
         for q in self.questions[1:]:
             if q['question'] == question:
                 correct = q['correct_answer']
-                return correct, q['answers'][correct-1]
-        return -1, 0, ""
+                return correct, q['answers'][correct-1], constants.NUMBER_OF_QUESTIONS
+        return -1, "", -1
 
 
 trivia_categories_dict = {'Animals': 27,

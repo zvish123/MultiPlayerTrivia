@@ -1,20 +1,25 @@
 PROTOCOL_CLIENT_COMMANDS = {
-    "login": ["name", "password"],
-    "signin": ["name", "password"],
-    "logout": ["name"],
-    "start": ["player_name", "category", "difficulty", "number_of_questions"],
+    'login': ["name", "password"],
+    'signin': ["name", "password"],
+    'logout': ["name"],
+    'start_game': ["player_name", "category", "difficulty", "number_of_questions"],
     'next_question': ["game_id"],
     'check_answer': ['game_id', "question_id", "question", "player_reply"],
     'game_score': ['game_id', 'player_name'],
     'active_games': ["player_name"],
     'continue_game': ['game_id', 'player_name'],
     'open_mp_game': ["player_name", "category", "difficulty", "number_of_questions"],
-    'mp_games': [],
+    'mp_games': ["player_name"],
     'join_mp_game': ['game_id', 'player_name'],
     'leave_mp_game': ['game_id', 'player_name'],
     'start_mp_game': ['game_id'],
+    'close_mp_game': ['game_id'],
     'next_mp_question': ["game_id"],
-    'games_history': ['player_id']
+    'games_history': ['player_id'],
+    'mp_games_notify_game_manager': ["game_id", "player_name"],
+    'notify_mp_answer': ['game_id', 'player_name', "question_id", "question", "player_reply"],
+    'can_go_next': ["game_id"],
+    'mp_game_result': ["game_id"]
 }
 PROTOCOL_SERVER_COMMANDS = {
     "login_response": ["is_ok", "player_id"],
@@ -22,7 +27,7 @@ PROTOCOL_SERVER_COMMANDS = {
     "logout_response": ["is_ok"],
     "connect_response": ["is_ok"],
     "player_response": ["player_id"],
-    "start_response": ["game_id"],
+    "start_game_response": ["game_id"],
     'next_question_response': ["question_id", "question", "list of answers"],
     'check_answer_response': ['is_correct', "correct answer"],
     'game_score_response': ['game_score'],
@@ -33,10 +38,15 @@ PROTOCOL_SERVER_COMMANDS = {
     'join_mp_game_response': ['game_id'],
     'leave_mp_game_response': ['game_id'],
     'start_mp_game_response': ['is_ok'],
+    'close_mp_game_response': ['is_ok'],
     'next_mp_question_response': ["question_id", "question", "list of answers"],
     'notify_mp_join': ['game_id', 'player_name'],
     'notify_mp_leave': ['game_id', 'player_name'],
-    'games_history_response': ['list of games']
+    'games_history_response': ['list of games'],
+    'mp_games_notify_game_manager_response': ['game_id'],
+    'notify_mp_answer_response': ['is_notified'],
+    'can_go_next_response':  ["is_ok"],
+    "mp_game_result_response": ["header", "list of players results"]
 }
 DELIMITER = "|"
 
@@ -68,6 +78,7 @@ class Protocol:
 
     @staticmethod
     def parse_message(msg):
+        # print(msg)
         if type(msg) is bytes:
             msg = msg.decode()
         parts = msg.split(DELIMITER)

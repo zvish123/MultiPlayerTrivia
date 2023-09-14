@@ -35,7 +35,7 @@ class TriviaOpenDb:
             self.next_question += 1
             return key, question, answers
         except IndexError:
-            print("no more questions")
+            # print("no more questions")
             return None, None, None
 
     def get_correct_answer(self, question):
@@ -173,5 +173,5 @@ if __name__ == "__main__":
         except KeyError:
             print("illegal difficulty")
 
-    t = TriviaOpenDb(category, difficulty, 3)
+    t = TriviaOpenDb(category, difficulty, constants.NUMBER_OF_QUESTIONS)
     print("game score: ", TriviaOpenDb.run_game())

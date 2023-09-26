@@ -3,6 +3,7 @@ import html
 import random
 
 import constants
+import functions
 from firefox_db import Database
 
 
@@ -14,14 +15,18 @@ class TriviaOpenDb:
     def __init__(self, cat, diff, number_of_questions=10, next_question=None):
         self.category = cat
         self.difficulty = diff
-        self.number_of_questions = number_of_questions
+        self.number_of_questions = number_of_questions * constants.MULTIPLY_FACTOR
         if next_question is None:
-            self.my_questions_path = QUESTIONS_PATH_WEB.format(number_of_questions,
+            self.my_questions_path = QUESTIONS_PATH_WEB.format(self.number_of_questions,
                                                                trivia_categories_dict[self.category],
                                                                trivia_difficulty_dict[self.difficulty])
-            # print(self.my_questions_path)
-            self.questions = TriviaOpenDb.load_trivia_game(self.my_questions_path)
-            # print(self.questions)
+            print(self.my_questions_path)
+            quest = TriviaOpenDb.load_trivia_game(self.my_questions_path)
+            print(quest)
+            quest = functions.shuffle_dict(quest, number_of_questions)
+            print(quest)
+            self.questions = quest
+
             self.next_question = 0
         else:
             self.next_question = next_question

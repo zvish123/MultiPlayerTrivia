@@ -57,11 +57,14 @@ class Protocol:
         if cmd in PROTOCOL_CLIENT_COMMANDS.keys():
             d = data.split(DELIMITER)
             if len(d) == len(PROTOCOL_CLIENT_COMMANDS[cmd]):
+                # print(f"Valid {cmd}: {data}")
                 return True
         if cmd in PROTOCOL_SERVER_COMMANDS.keys():
             d = data.split(DELIMITER)
             if len(d) == len(PROTOCOL_SERVER_COMMANDS[cmd]):
+                # print(f"Valid {cmd}: {data}")
                 return True
+        # print(f"Invalid message {cmd}: {data}")
         return False
 
     @staticmethod
@@ -88,5 +91,6 @@ class Protocol:
             for part in parts[2:]:
                 data += DELIMITER + part
         if Protocol.is_valid(cmd, data):
+            # print("parse_message", cmd, data.split(DELIMITER))
             return cmd, data.split(DELIMITER)
         return None, None

@@ -213,7 +213,7 @@ class Client:
                 print("Games to continue...")
                 print("Game Id  Category           Difficulty Number of questions")
                 for item in active_games:
-                    prms = item.split("*")
+                    prms = item.split(constants.LIST_DELIMITER)
                     g_id = prms[0]
                     cat = prms[1]
                     diclt = prms[2]

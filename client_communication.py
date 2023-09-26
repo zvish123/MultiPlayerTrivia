@@ -60,10 +60,16 @@ class ClientCommunication:
                 rep = rep.decode()
             # print(f"{self.client.getsockname()} receive from {self.client.getpeername()}: {rep}")
             self.log.write(f"{self.client.getsockname()} receive from {self.client.getpeername()}: {rep}")
-            return Protocol.parse_message(rep)
+            cmd, data = Protocol.parse_message(rep)
+            # print("after parse",cmd, data)
+            return cmd, data
             # return rep
         except socket.error as e:
             print(e)
+            return None, None
+        except Exception as e:
+            print(e)
+            return None, None
 
     def receive(self, decode=True):
         try:

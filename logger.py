@@ -1,5 +1,6 @@
 import logging
 from threading import Lock
+import glob, os
 
 
 class Logger:
@@ -30,6 +31,11 @@ class Logger:
         if self.print_screen:
             print(logging.getLevelName(level), ":", message)
 
+    @staticmethod
+    def clean_client_logs(log_path):
+        for file in glob.glob(log_path + "client*.log"):
+            print(file)
+            os.remove(file)
 
 if __name__ == '__main__':
     my_logger = Logger("log/example.log", logging.DEBUG)
@@ -39,3 +45,5 @@ if __name__ == '__main__':
     my_logger.write("error message", logging.ERROR)
     my_logger.write("critical message", logging.CRITICAL)
     my_logger.write("mistake message", "a")
+
+    Logger.clean_client_logs("log/")

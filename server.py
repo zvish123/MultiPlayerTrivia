@@ -4,6 +4,7 @@ import constants
 from threading import Lock
 from idgenerator import GameIdGenerator
 from trivia_questions import TriviaOpenDb, TriviaOpenDbFirebase
+from trivialocaldb import TriviaLocalDb
 from constants import DELIMITER
 from protocol import Protocol
 from firefox_db import Database
@@ -18,6 +19,7 @@ class Server:
         self.game_id_generator = GameIdGenerator()
         self.log_lock = Lock()
         self.log = Logger("log/server.log")
+        self.clean_clients_logs()
 
         print("Server is ready")
         try:
@@ -45,6 +47,9 @@ class Server:
             self.players.append(my_player)
             print(f"player {my_player.name} appended to list")
         return to_add
+
+    def clean_clients_logs(self):
+        Logger.clean_client_logs("log/")
 
     def remove_player(self, name):
         for item in self.players:
@@ -136,7 +141,8 @@ class Server:
         number_of_questions = int(params[4])
         game_id = self.game_id_generator.get_next_id()
         try:
-            trivia = TriviaOpenDb(category, difficulty, number_of_questions)
+            # trivia = TriviaOpenDb(category, difficulty, number_of_questions)
+            trivia = TriviaLocalDb(category, difficulty, number_of_questions)
             # self.games[game_id] = {"player": player_name, "questions": trivia.questions}
             Database.insert("games", str(game_id),
                             {"category": category,
@@ -191,7 +197,8 @@ class Server:
                 number_of_questions = len(value['players'][player.name].values()) - 1
                 actual_questions_asked = int(value['number_questions'])
                 if number_of_questions != actual_questions_asked:
-                    response = f"{key}*{value['category']}*{value['difficulty']}*{value['number_questions']}"
+                    response = f"{key}{constants.LIST_DELIMITER}{value['category']}{constants.LIST_DELIMITER}" \
+                               f"{value['difficulty']}{constants.LIST_DELIMITER}{value['number_questions']}"
                     active_games.append(response)
             except KeyError:
                 pass
@@ -329,27 +336,30 @@ class Server:
         params = data.split(DELIMITER)
         game_id = params[1]
         player_name = params[2]
-        players = self.mp_games[game_id]['players']
+        try:
+            players = self.mp_games[game_id]['players']
 
-        for key in list(players.keys()):
-            print(players)
-            is_manager = players[key]["manager"]
-            if key == player_name and is_manager:
-                for key1 in list(players.keys()):
-                    p_conn = players[key1]["player_socket"]
-                    self.send_to(p_conn, "leave_mp_game_response", [game_id])
-                self.lock.acquire()
-                self.mp_games.pop(game_id)
-                self.lock.release()
-                print(f"game manger: {key}, left multi player game {game_id}")
-                break
-            elif key == player_name:
-                self.send_to(conn, "leave_mp_game_response", [game_id])
-                self.lock.acquire()
-                self.mp_games[game_id]['players'].pop(player_name)
-                self.lock.release()
-                print(f"{key} left multi player game {game_id}")
-                break
+            for key in list(players.keys()):
+                print(players)
+                is_manager = players[key]["manager"]
+                if key == player_name and is_manager:
+                    for key1 in list(players.keys()):
+                        p_conn = players[key1]["player_socket"]
+                        self.send_to(p_conn, "leave_mp_game_response", [game_id])
+                    self.lock.acquire()
+                    self.mp_games.pop(game_id)
+                    self.lock.release()
+                    print(f"game manger: {key}, left multi player game {game_id}")
+                    break
+                elif key == player_name:
+                    self.send_to(conn, "leave_mp_game_response", [game_id])
+                    self.lock.acquire()
+                    self.mp_games[game_id]['players'].pop(player_name)
+                    self.lock.release()
+                    print(f"{key} left multi player game {game_id}")
+                    break
+        except KeyError:
+            pass
 
     def notify_mp_answer(self, conn, data):
         params = data.split(DELIMITER)

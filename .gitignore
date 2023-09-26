@@ -31,3 +31,4 @@
 /test/test_gui3.py
 /test/test_kill_recv.py
 /test/test_kill_recv_client.py
+/design/waitforstart.ui

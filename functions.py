@@ -1,10 +1,10 @@
 import logging
-
+import inspect
 from PyQt5.QtWidgets import *
 import random
 import constants
 
-@staticmethod
+
 def load_css(window, relative_path=''):
     if relative_path == '':
         sshFile = "css/mystylesheet.css"
@@ -25,12 +25,18 @@ def shuffle_dict(my_dict, size):
     return ret_dict
 
 def my_print(text, log_level=logging.DEBUG):
-    # print(log_level, constants.LOG_LEVEL)
     if log_level >= constants.LOG_LEVEL:
-        print(text)
+        print(f"{logging.getLevelName(log_level)}:{get_function_name()}->{text}")
+
+def get_function_name():
+    try:
+        return inspect.stack()[2][3]
+    except IndexError:
+        return ""
+
 
 if __name__ == '__main__':
-    my_print(("hello"))
+    my_print("hello")
     my_print("hello debug", logging.DEBUG)
     my_print("hello info", logging.INFO)
     my_print("hello warning", logging.WARNING)

@@ -20,11 +20,11 @@ class TriviaOpenDb:
             self.my_questions_path = QUESTIONS_PATH_WEB.format(self.number_of_questions,
                                                                trivia_categories_dict[self.category],
                                                                trivia_difficulty_dict[self.difficulty])
-            print(self.my_questions_path)
+            # print(self.my_questions_path)
             quest = TriviaOpenDb.load_trivia_game(self.my_questions_path)
-            print(quest)
+            # print(quest)
             quest = functions.shuffle_dict(quest, number_of_questions)
-            print(quest)
+            # print(quest)
             self.questions = quest
 
             self.next_question = 0
@@ -109,7 +109,7 @@ class TriviaOpenDbFirebase(TriviaOpenDb):
     def __init__(self, game_id, player_name):
         # print("init TriviaOpenDbFirebase")
         game_dict = Database.get_by_key("games", game_id)
-        print(game_dict['players'])
+        # print(game_dict['players'])
         super().__init__(game_dict['category'], game_dict['difficulty'],
                          game_dict['number_questions'], len(game_dict['players'][player_name]))
         self.questions = game_dict['questions']
@@ -119,8 +119,8 @@ class TriviaOpenDbFirebase(TriviaOpenDb):
     def get_next_question(self):
         try:
             key = self.next_question
-            print(key)
-            print(self.questions)
+            # print(key)
+            # print(self.questions)
             struct = self.questions[key]
             question = struct['question']
             answers = struct['answers']
@@ -141,8 +141,8 @@ class TriviaOpenDbFirebase(TriviaOpenDb):
 
 
 trivia_categories_dict = {'Animals': 27,
-                          'Book': 10,
-                          "General knowledge": 9,
+                          'Books': 10,
+                          "General Knowledge": 9,
                           "History": 23,
                           "Music": 12,
                           "Science computers": 18,

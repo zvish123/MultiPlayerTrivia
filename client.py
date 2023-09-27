@@ -3,6 +3,7 @@ from trivia_questions import trivia_difficulty_dict, trivia_categories_dict
 from player import Player
 import time
 import constants
+from cipher import *
 
 menu_options = {
     "Login": "1",
@@ -31,6 +32,11 @@ class Client:
         self.player = None
         self.mp_game_id = None
         self.log = None
+        if constants.DH_ENCRYPT:
+            client_ip_port = self.communication.client.getsockname()
+            dh, pk = Cipher.get_dh_public_key()
+            cmd, params = self.communication.send_response("exchange_key", [client_ip_port, pk])
+            self.communication.set_shared_key(Cipher.get_dh_shared_key(dh, eval(params[0])))
 
     def redraw(self, game, p):
         pass
@@ -435,6 +441,16 @@ class Client:
         else:
             print("Login to play multyplayer game")
 
+    def exit(self):
+        print("exiting game")
+        self.logout()
+        if self.communication.shared_key is not None:
+            client_ip_port = self.communication.client.getsockname()
+            cmd, data = self.communication.send_response("remove_shared_key", [client_ip_port])
+            # print(data)
+            if data[0] == 'ok':
+                print("shared key removed")
+
     def run(self):
         # ans = ''
         try:
@@ -456,10 +472,10 @@ class Client:
                 elif ans == menu_options["Multi player game options"]:
                     self.multi_player_game_options()
                 elif ans == menu_options["Exit"]:
-                    print("exiting game")
+                    self.exit()
                     break
         except KeyboardInterrupt:
-            self.logout()
+            self.exit()
         self.communication.client.close()
 
 

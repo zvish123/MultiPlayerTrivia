@@ -19,7 +19,7 @@ class MainWindow(QDialog):
         self.tableWidget.selectionModel().selectionChanged.connect(self.on_selection_change)
         self.load_data()
         delegate = ReadOnlyDelegate(self)
-        print(self.tableWidget.rowCount())
+        # print(self.tableWidget.rowCount())
         for i in range(self.tableWidget.rowCount()):
             self.tableWidget.setItemDelegateForRow(i, delegate)
 

@@ -1,17 +1,12 @@
-import sys
-from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import (QApplication, QDialog, QWidget, QPushButton, QLabel, QLineEdit, QGridLayout, QMessageBox)
-from PyQt5.uic import loadUi
-import constants
-import functions
+from gui.basewindow import BaseWindow
+from functions import my_print
 
-
-class GameResultForm(QDialog):
+class GameResultForm(BaseWindow):
     def __init__(self, game_id, category="", difficulty="", main_window=None, relative_path=''):
-        super().__init__()
-        print("__init__ GameResultForm")
-        loadUi(relative_path + "design/gameresult.ui", self)
-        functions.load_css(self)
+        super().__init__("design/gameresult.ui")
+        # print("__init__ GameResultForm")
+        # loadUi(relative_path + "design/gameresult.ui", self)
+        # functions.load_css(self)
         self.main_window = main_window
         if self.main_window is not None and self.main_window.client is not None:
             score = self.main_window.client.game_score(game_id)
@@ -20,9 +15,8 @@ class GameResultForm(QDialog):
             self.lbl_difficulty.setText(difficulty)
             self.lbl_score.setText(score)
         self.okButton.clicked.connect(self.ok_function)
-        # self.okButton.setStyleSheet(constants.PUSH_BTN_CSS)
 
     def ok_function(self):
-        print("ok_function run")
+        my_print("ok_function run")
         if self.main_window is not None and self.main_window.client is not None:
             self.main_window.draw_background_picture()

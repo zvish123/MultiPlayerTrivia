@@ -1,21 +1,19 @@
 import sys
-from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import (QApplication, QDialog, QWidget, QPushButton, QLabel, QLineEdit, QGridLayout, QMessageBox)
-from PyQt5.uic import loadUi
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QApplication
 import textwrap
 import constants
-import functions
+from gui.basewindow import BaseWindow
 
 
-class DisplayQuestion(QDialog):
+class DisplayQuestion(BaseWindow):
     def __init__(self, game_id, question_id, question, answers, main_window=None, relative_path=''):
-        super().__init__()
-        print("__init__ DisplayQuestion")
-        loadUi(relative_path + "design/gamequestion.ui", self)
-        functions.load_css(self, relative_path)
+        super().__init__("design/gamequestion.ui")
+        # print("__init__ DisplayQuestion")
+        # loadUi(relative_path + "design/gamequestion.ui", self)
+        # functions.load_css(self, relative_path)
         self.tableWidget.setColumnWidth(0, 440)
         self.leave_btn.clicked.connect(self.leave_function)
-
         self.select_btn.clicked.connect(self.select_function)
         self.lbl_reply.setHidden(True)
         self.lbl_correct.setHidden(True)
@@ -32,7 +30,7 @@ class DisplayQuestion(QDialog):
         self.fill_fields()
 
     def fill_fields(self):
-        print("fill_fields")
+        # print("fill_fields")
         if self.question_id is not None:
             question1 = textwrap.fill(self.question, width=45)
             self.question_lbl.setStyleSheet("color: rgb(255, 140, 94)")
@@ -40,16 +38,8 @@ class DisplayQuestion(QDialog):
             self.fill_table_widget(self.answers)
             self.tableWidget.setHidden(False)
             self.select_btn.setHidden(False)
-        else:
-            print("fill_fields do nothing")
         # else:
-        #     gid = str(self.game_id)
-        #     text = f"Waiting for multi play game [{gid}] to start"
-        #     # print(text)
-        #     question1 = textwrap.fill(text, width=45)
-        #     self.question_lbl.setText(question1)
-        #     self.question_lbl.setStyleSheet("color: red")
-
+        #     print("fill_fields do nothing")
 
     def fill_table_widget(self, answers):
         if len(answers) > 0:
@@ -60,12 +50,13 @@ class DisplayQuestion(QDialog):
                 self.tableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(answer))
                 row += 1
             self.tableWidget.selectRow(0)
+
     def select_function(self):
-        print("start select_function")
+        # print("start select_function")
         p_reply = self.tableWidget.currentRow()+1
         if self.main_window is not None and self.main_window.client is not None:
             is_correct, correct_ans_txt = self.main_window.client.check_question_answer(self.game_id, self.question_id,
-                                                                                        self.question, p_reply )
+                                                                                        self.question, p_reply)
             # print(is_correct, correct_ans_txt)
             self.lbl_reply.setHidden(False)
             if is_correct:
@@ -82,9 +73,8 @@ class DisplayQuestion(QDialog):
             self.next_btn.setEnabled(True)
             self.select_btn.setEnabled(False)
 
-
     def next_function(self):
-        print("start next_function")
+        # print("start next_function")
         question_id, question, answers = self.main_window.client.get_next_question(self.game_id)
         if question_id is not None:
             self.main_window.display_question_form(self.game_id, question_id, question, answers)
@@ -92,7 +82,9 @@ class DisplayQuestion(QDialog):
             self.main_window.display_game_result(self.game_id)
 
     def leave_function(self):
-        print("leave_function pressed")
+        # print("leave_function pressed")
+        self.main_window.draw_background_picture()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

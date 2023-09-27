@@ -11,6 +11,8 @@ from firefox_db import Database
 from player import Player
 from datetime import datetime
 from logger import Logger
+from cipher import *
+from functions import *
 
 
 class Server:
@@ -27,7 +29,7 @@ class Server:
             # print(f"server start at {self.server_socket.getsockname()}")
             self.log.write(f"server start at {self.server_socket.getsockname()}")
         except socket.error as e:
-            print(e)
+            my_print(e, logging.ERROR)
 
         self.server_socket.listen(2)
         # print("Waiting for a connection, Server Started")
@@ -36,6 +38,7 @@ class Server:
         self.mp_games = {}
         self.players = []
         self.lock = Lock()
+        self.shared_keys = {}
 
     def add_player(self, my_player):
         to_add = True
@@ -45,7 +48,7 @@ class Server:
                 to_add = False
         if to_add:
             self.players.append(my_player)
-            print(f"player {my_player.name} appended to list")
+            my_print(f"player {my_player.name} appended to list")
         return to_add
 
     def clean_clients_logs(self):
@@ -57,15 +60,25 @@ class Server:
                 self.players.remove(item)
                 print(f"player: {name}, removed")
 
-    def send_to(self, conn, cmd, params):
-        msg = Protocol.build_message(cmd, params)
+    def send_to(self, conn, cmd, params, encrypt=True):
+        sk = self.get_shared_key(conn)
+        if encrypt:
+            msg = Protocol.build_message(cmd, params, sk)
+        else:
+            msg = Protocol.build_message(cmd, params, None)
         conn.send(msg)
-        self.log.write(f"{conn.getsockname()} send to {conn.getpeername()}: {msg.decode()}")
+        self.log.write(f"{conn.getsockname()} send to {conn.getpeername()}: {msg}")
 
     def receive_from(self, conn):
-        data = conn.recv(4096).decode()
+        data = conn.recv(4096)
         self.log.write(f"{conn.getsockname()} receive from {conn.getpeername()}: {data}")
-        return Protocol.parse_message(data)
+        sk = self.get_shared_key(conn)
+        if sk is not None:
+            cipher = Cipher(sk, constants.NONCE)
+            data = cipher.aes_decrypt(data)
+        else:
+            data = data.decode()
+        return Protocol.parse_message(data, self.get_shared_key(conn))
 
     @staticmethod
     def calc_game_score(game_id, my_answers):
@@ -126,11 +139,12 @@ class Server:
         self.send_to(conn, "login_response", [str(found), str(key)])
         return player
 
-    def logout(self, conn, data):
+    def logout(self, conn, data, to_send=True):
         params = data.split(DELIMITER)
         name = params[1]
         self.remove_player(name)
-        self.send_to(conn, "logout_response", ["ok"])
+        if to_send:
+            self.send_to(conn, "logout_response", ["ok"])
         return None
 
     def start_game(self, conn, data):
@@ -155,7 +169,7 @@ class Server:
             return trivia
         except NameError:
             self.send_to(conn, "start_game_response", [str(-1)])
-            print("Fail to get answer from opendb")
+            my_print("Fail to get answer from opendb", logging.ERROR)
             return None
 
     def next_question(self, conn, trivia):
@@ -202,7 +216,7 @@ class Server:
                     active_games.append(response)
             except KeyError:
                 pass
-        print(active_games)
+        # print(active_games)
         self.send_to(conn, "active_games_response", [active_games])
 
     def games_history(self, conn, data):
@@ -253,7 +267,7 @@ class Server:
             self.send_to(conn, "open_mp_game_response", [str(game_id)])
         except NameError:
             self.send_to(conn, "open_mp_game_response", [str(-1)])
-            print("Fail to get answer from opendb")
+            my_print("Fail to get answer from opendb", logging.ERROR)
             # return None
 
     def handle_multi_players_games(self, conn):
@@ -340,7 +354,7 @@ class Server:
             players = self.mp_games[game_id]['players']
 
             for key in list(players.keys()):
-                print(players)
+                # print(players)
                 is_manager = players[key]["manager"]
                 if key == player_name and is_manager:
                     for key1 in list(players.keys()):
@@ -368,7 +382,7 @@ class Server:
         question_id = int(params[3])
         # question = params[4]
         p_answer = int(params[5]) - 1
-        print(self.mp_games)
+        # print(self.mp_games)
         # print(game_id, type(game_id))
         # print(question_id, type(question_id))
 
@@ -387,20 +401,20 @@ class Server:
         # print(current_question)
         correct_ans = int(current_question['correct_answer']) - 1
         # correct_ans_txt = current_question['answers'][correct_ans]
-        print(correct_ans, type(correct_ans))
-        print(correct_ans, p_answer)
+        # print(correct_ans, type(correct_ans))
+        # print(correct_ans, p_answer)
         is_correct = (correct_ans == p_answer)
         val = 0
         if is_correct:
             val = 5
         self.lock.acquire()
         self.mp_games[game_id]["players"][player_name]["player_answers"].append(val)
-        print(self.mp_games[game_id]["players"])
+        # print(self.mp_games[game_id]["players"])
         self.lock.release()
         self.send_to(conn, "notify_mp_answer_response", [str(True)])
 
     def can_move_to_next_mp_question(self, conn, data):
-        print("start can_go_next")
+        # print("start can_go_next")
         params = data.split(DELIMITER)
         game_id = params[1]
         players = self.mp_games[game_id]["players"]
@@ -410,7 +424,7 @@ class Server:
             if len(players[key]["player_answers"]) != previous_question:
                 can_move = False
         self.send_to(conn, "can_go_next_response", [str(can_move)])
-        print(f"end can_go_next {can_move}")
+        # print(f"end can_go_next {can_move}")
 
     def mp_game_result(self, data):
         params = data.split(DELIMITER)
@@ -435,6 +449,32 @@ class Server:
         self.mp_games.pop(game_id)
         self.lock.release()
 
+    def exchange_key(self, conn, data):
+        params = data.split(DELIMITER)
+        socket_ip_port = params[1]
+        client_pk = eval(params[2])
+        dh, spk = Cipher.get_dh_public_key()
+        ssk = Cipher.get_dh_shared_key(dh, client_pk)
+        self.lock.acquire()
+        self.shared_keys[socket_ip_port] = ssk
+        # print(self.shared_keys)
+        self.lock.release()
+        # print("shared key:", ssk)
+        self.send_to(conn, "exchange_key_response", [spk], False)
+        # print("key exchange finished")
+
+    def remove_shared_key(self, conn, data, to_send=True):
+        params = data.split(DELIMITER)
+        socket_ip_port = params[1]
+        try:
+            sk = self.shared_keys[socket_ip_port]
+            print(f"removing shared key for {socket_ip_port}")
+            if to_send:
+                self.send_to(conn, "remove_shared_key_response", ["ok"])
+            del(self.shared_keys[socket_ip_port])
+        except KeyError:
+            pass
+
     def threaded_client(self, conn):
         reply = "ok"
         self.send_to(conn, "connect_response", [reply])
@@ -442,11 +482,18 @@ class Server:
         trivia = None
         player = None
         while to_continue:
-            data = conn.recv(4096).decode()
+            data = conn.recv(4096)
+            self.log.write(f"receive: {data}")
+            sk = self.get_shared_key(conn)
+            if sk is not None:
+                cipher = Cipher(sk, constants.NONCE)
+                data = cipher.aes_decrypt(data)
+                # print(data)
+            else:
+                data = data.decode()
             if data == "":
                 break
-            # print("receive:", data)
-            self.log.write(f"receive: {data}")
+
             if "signin" in data:
                 player = self.signin(conn, data)
             elif "login" in data:
@@ -471,6 +518,7 @@ class Server:
                 trivia = TriviaOpenDbFirebase(game_id, player_name)
                 # self.games[game_id] = {"player": player_name, "questions": trivia.questions}
                 self.send_to(conn, "continue_game_response", [str(game_id)])
+                print(f"{player_name} continue game {game_id}")
             elif "games_history" in data:
                 self.games_history(conn, data)
             elif "open_mp_game" in data:
@@ -495,6 +543,10 @@ class Server:
                 self.can_move_to_next_mp_question(conn, data)
             elif "mp_game_result" in data:
                 self.mp_game_result(data)
+            elif "exchange_key" in data:
+                self.exchange_key(conn, data)
+            elif "remove_shared_key" in data:
+                self.remove_shared_key(conn, data)
 
     def run(self):
         while True:
@@ -502,6 +554,13 @@ class Server:
             # print(f"Client Connected: {addr}")
             self.log.write(f"Client Connected: {addr}")
             start_new_thread(self.threaded_client, (conn,))
+
+    def get_shared_key(self, conn):
+        try:
+            client_ip_port = str(conn.getpeername())
+            return self.shared_keys[client_ip_port]
+        except KeyError:
+            return None
 
 
 if __name__ == '__main__':

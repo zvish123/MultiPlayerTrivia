@@ -1,22 +1,11 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QDialog, QTableWidgetItem)
-from PyQt5.uic import loadUi
-import constants
-import functions
 from gui.readonlydelegate import ReadOnlyDelegate
+from gui.basewindow import BaseWindow
 
 
-# class ReadOnlyDelegate(QStyledItemDelegate):
-#     def createEditor(self, perant, option, index):
-#         print("create_editor fire")
-#         return
-
-class GamesHistoryForm(QDialog):
-    def __init__(self, main_window=None, relative_path=''):
-        super().__init__()
-        print("__init__ GamesHistoryForm")
-        loadUi(relative_path + "design/gameshistory.ui", self)
-        functions.load_css(self)
+class GamesHistoryForm(BaseWindow):
+    def __init__(self, main_window=None):
+        super().__init__("design/gameshistory.ui")
         self.tableWidget.setColumnWidth(0, 150)
         self.tableWidget.setColumnWidth(1, 75)
         self.tableWidget.setColumnWidth(2, 150)
@@ -25,7 +14,6 @@ class GamesHistoryForm(QDialog):
         self.tableWidget.setColumnWidth(5, 75)
         self.tableWidget.selectionModel().selectionChanged.connect(self.on_selection_change)
         self.main_window = main_window
-        # self.okButton.setStyleSheet(constants.PUSH_BTN_CSS)
         self.okButton.clicked.connect(self.ok_function)
         games = self.main_window.client.games_history()
         self.fill_table_widget(games)
@@ -34,12 +22,6 @@ class GamesHistoryForm(QDialog):
             self.tableWidget.setItemDelegateForRow(i, delegate)
 
     def fill_table_widget(self, games):
-        print(games)
-        # if len(games) > 0:
-        #     header = QTableWidgetItem()
-        #     header.setText(games[0])
-        #     self.tableWidget.setHorizontalHeaderItem(0, header)
-        # print("after setHorizontalHeaderItem")
         if len(games) > 0:
             row = 0
             self.tableWidget.setRowCount(len(games))
@@ -52,10 +34,8 @@ class GamesHistoryForm(QDialog):
                 self.tableWidget.setItem(row, 5, QtWidgets.QTableWidgetItem(value[4]))
                 row += 1
             self.tableWidget.selectRow(0)
-        print("finish fill_table_widget")
 
     def ok_function(self):
-        print("ok_function pressed")
         if self.main_window is not None and self.main_window.client is not None:
             self.main_window.draw_background_picture()
 

@@ -1,6 +1,7 @@
 import logging
 from threading import Lock
 import glob, os
+from functions import my_print
 
 
 class Logger:
@@ -34,7 +35,7 @@ class Logger:
     @staticmethod
     def clean_client_logs(log_path):
         for file in glob.glob(log_path + "client*.log"):
-            print(file)
+            my_print(file)
             os.remove(file)
 
 if __name__ == '__main__':

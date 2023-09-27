@@ -3,7 +3,7 @@ import logging
 
 PORT = 6668
 SERVER_IP = "127.0.0.1"
-DELIMITER = "|"
+DELIMITER = "|||"
 LIST_DELIMITER = "@"
 
 DIFFICULT_DICT = {
@@ -34,3 +34,6 @@ LABEL_COLOR_CSS = 'QLabel {{font-size: 15pt; color:{}}}'
 # print(LABEL_COLOR_CSS.format(' rgb(255, 0, 0)'))
 
 LOG_LEVEL = logging.DEBUG
+
+NONCE = b"better to try than not try"
+DH_ENCRYPT = False

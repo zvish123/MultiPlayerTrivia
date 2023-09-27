@@ -63,9 +63,9 @@ class Login(BaseWindow):
 			if self.main_window is not None:
 				self.main_window.add_user_to_menu("hello " + user_name)
 				self.main_window.draw_background_picture()
-				self.main_window.disableMenuOption('&Login')
-				self.main_window.disableMenuOption('&Logout', False)
-				self.main_window.disableMenuOption('&Play', False)
+				self.main_window.disable_menu_option('&Login')
+				self.main_window.disable_menu_option('&Logout', False)
+				self.main_window.disable_menu_option('&Play', False)
 			self.close()
 		elif result == 0:
 			self.lbl_error.setText('You already logged in')
